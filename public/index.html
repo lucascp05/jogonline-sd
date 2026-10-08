@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Pac Arena</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #050816;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        h1 {
+            color: #ffe600;
+            font-size: 42px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 15px #ffe600;
+        }
+
+        #login {
+            margin-top: 80px;
+        }
+
+        input {
+            padding: 14px;
+            width: 220px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 14px 20px;
+            margin-left: 5px;
+            border: none;
+            border-radius: 8px;
+            background: #ffe600;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #jogo {
+            display: none;
+        }
+
+        #informacoes {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 15px;
+            font-size: 18px;
+        }
+
+        #arena {
+            display: grid;
+
+            grid-template-columns: repeat(21, 28px);
+            grid-template-rows: repeat(19, 28px);
+
+            justify-content: center;
+
+            margin: 20px auto;
+
+            background: #000;
+
+            border: 4px solid #174cff;
+
+            box-shadow: 0 0 25px #174cff;
+
+            width: max-content;
+        }
+
+        .celula {
+            width: 28px;
+            height: 28px;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            position: relative;
+        }
+
+        .parede {
+            background: #111d72;
+            border: 2px solid #2447ff;
+            box-shadow: inset 0 0 5px #2447ff;
+        }
+
+        .comida::after {
+            content: "";
+
+            width: 5px;
+            height: 5px;
+
+            background: white;
+
+            border-radius: 50%;
+
+            box-shadow: 0 0 5px white;
+        }
+
+        .jogador {
+            width: 23px;
+            height: 23px;
+
+            border-radius: 50%;
+
+            position: absolute;
+
+            z-index: 5;
+
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .jogador::after {
+            content: "";
+
+            position: absolute;
+
+            width: 8px;
+            height: 8px;
+
+            background: white;
+
+            border-radius: 50%;
+
+            top: 4px;
+            right: 4px;
+        }
+
+        #placar {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px;
+        }
+
+        .score {
+            background: #111827;
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+        }
+
+        #evento {
+            height: 30px;
+            color: #ffe600;
+            font-weight: bold;
+        }
+
+        #controles {
+            margin: 15px;
+            color: #aaa;
+        }
+
+        .tecla {
+            display: inline-block;
+            background: #1e293b;
+            padding: 6px 10px;
+            margin: 3px;
+            border-radius: 5px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <h1>🟡 PAC ARENA</h1>
+
+    <div id="login">
+
+        <h2>Entre na batalha</h2>
+
+        <input
+            id="nome"
+            maxlength="12"
+            placeholder="Seu nome"
+        >
+
+        <button id="entrar">
+            JOGAR
+        </button>
+
+    </div>
+
+    <div id="jogo">
+
+        <div id="informacoes">
+
+            <div>
+                👥 Jogadores:
+                <span id="quantidade">0</span>
+            </div>
+
+            <div>
+                🍒 Comidas:
+                <span id="comidas">0</span>
+            </div>
+
+        </div>
+
+        <div id="placar"></div>
+
+        <div id="evento">
+            Pegue todas as comidas!
+        </div>
+
+        <div id="arena"></div>
+
+        <div id="controles">
+
+            <span class="tecla">⬆️ W</span>
+            <span class="tecla">⬇️ S</span>
+            <span class="tecla">⬅️ A</span>
+            <span class="tecla">➡️ D</span>
+
+        </div>
+
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script>
+
+        const socket = io();
+
+        const login =
+            document.getElementById("login");
+
+        const jogo =
+            document.getElementById("jogo");
+
+        const nome =
+            document.getElementById("nome");
+
+        const entrar =
+            document.getElementById("entrar");
+
+        const arena =
+            document.getElementById("arena");
+
+        const placar =
+            document.getElementById("placar");
+
+        const quantidade =
+            document.getElementById("quantidade");
+
+        const comidas =
+            document.getElementById("comidas");
+
+        const evento =
+            document.getElementById("evento");
+
+        let entrei = false;
+
+        entrar.addEventListener("click", () => {
+
+            if (!nome.value.trim()) {
+
+                alert("Digite seu nome!");
+
+                return;
+            }
+
+            socket.emit(
+                "entrar",
+                nome.value.trim()
+            );
+
+            login.style.display = "none";
+
+            jogo.style.display = "block";
+
+            entrei = true;
+        });
+
+        nome.addEventListener("keydown", (e) => {
+
+            if (e.key === "Enter") {
+                entrar.click();
+            }
+
+        });
+
+        document.addEventListener("keydown", (e) => {
+
+            if (!entrei) return;
+
+            const teclas = {
+
+                w: "up",
+                ArrowUp: "up",
+
+                s: "down",
+                ArrowDown: "down",
+
+                a: "left",
+                ArrowLeft: "left",
+
+                d: "right",
+                ArrowRight: "right"
+
+            };
+
+            const direcao = teclas[e.key];
+
+            if (direcao) {
+
+                e.preventDefault();
+
+                socket.emit(
+                    "mover",
+                    direcao
+                );
+            }
+
+        });
+
+        socket.on("estado", (estado) => {
+
+            quantidade.textContent =
+                estado.jogadores.length;
+
+            comidas.textContent =
+                estado.comidas.length;
+
+            arena.innerHTML = "";
+
+            for (let y = 0; y < estado.mapa.length; y++) {
+
+                for (
+                    let x = 0;
+                    x < estado.mapa[y].length;
+                    x++
+                ) {
+
+                    const celula =
+                        document.createElement("div");
+
+                    celula.className = "celula";
+
+                    if (estado.mapa[y][x] === "#") {
+
+                        celula.classList.add(
+                            "parede"
+                        );
+                    }
+
+                    if (
+                        estado.comidas.includes(
+                            `${x},${y}`
+                        )
+                    ) {
+
+                        celula.classList.add(
+                            "comida"
+                        );
+                    }
+
+                    estado.jogadores.forEach(
+                        (jogador) => {
+
+                            if (
+                                jogador.x === x &&
+                                jogador.y === y
+                            ) {
+
+                                const player =
+                                    document.createElement(
+                                        "div"
+                                    );
+
+                                player.className =
+                                    "jogador";
+
+                                player.style.background =
+                                    jogador.cor;
+
+                                player.title =
+                                    jogador.nome;
+
+                                celula.appendChild(
+                                    player
+                                );
+                            }
+
+                        }
+                    );
+
+                    arena.appendChild(celula);
+                }
+            }
+
+            placar.innerHTML = "";
+
+            [...estado.jogadores]
+                .sort(
+                    (a, b) =>
+                        b.pontos - a.pontos
+                )
+                .forEach((jogador) => {
+
+                    const score =
+                        document.createElement(
+                            "div"
+                        );
+
+                    score.className = "score";
+
+                    score.innerHTML =
+                        `${jogador.nome}: <strong>${jogador.pontos}</strong> ⭐`;
+
+                    placar.appendChild(score);
+                });
+
+        });
+
+        socket.on("evento", (texto) => {
+
+            evento.textContent = texto;
+
+        });
+
+    </script>
+
+</body>
+
+</html>
