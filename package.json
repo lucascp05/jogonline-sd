@@ -11,6 +11,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@aws-sdk/client-sqs": "^3.1148.0",
     "express": "^5.2.1",
     "socket.io": "^4.8.4"
   }
